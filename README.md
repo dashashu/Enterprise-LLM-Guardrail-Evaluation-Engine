@@ -12,6 +12,13 @@ A Python service for deploying LLM applications with input and output safeguards
 - Handle provider outages and malformed responses gracefully with safe, deterministic fallback behavior.
 - Make safety decisions auditable across input validation, prompt injection screening, output parsing, and moderation.
 
+## Run	Result	HTML report
+gpt-6-luna comparison	6/6 model answers and judge scores; 66.7% exact match	[Open report](/Users/ashutdas/Workspace/LLM_Guardrail/reports/gpt-6-luna-evaluation.html)
+gpt-6.1-sol comparison	TODO: Blocked by exhausted API credits;Need to retest ; no model-quality score	[Open report](/Users/ashutdas/Workspace/LLM_Guardrail/reports/gpt-6.1-sol-evaluation.html)
+Earlier gpt-6-luna run	6/6 model answers and judge scores; 83.3% exact match	[Open report](/Users/ashutdas/Workspace/LLM_Guardrail/reports/live-evaluation.html)
+<img width="1134" height="313" alt="image" src="https://github.com/user-attachments/assets/3c533007-4d33-4362-9170-469e203fa4c2" />
+Note: Evaluation cases should be versioned with their inputs, expected outputs, and rubric criteria. Store the model version, prompt version, run configuration, and judge rationale with each result so regressions can be investigated.
+
 ## Architecture & System Flow
 
 ### System architecture
