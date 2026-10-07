@@ -1,0 +1,49 @@
+{
+  "cases": 6,
+  "exact_match_rate": 0.6666666666666666,
+  "degraded_count": 0,
+  "faithfulness_mean": 1.0,
+  "completeness_mean": 0.9833333333333334,
+  "human_review_count": 3,
+  "by_category": {
+    "extraction": {
+      "cases": 1,
+      "exact_match_rate": 1,
+      "human_review_count": 0
+    },
+    "grounded-fact": {
+      "cases": 1,
+      "exact_match_rate": 1,
+      "human_review_count": 1
+    },
+    "policy": {
+      "cases": 2,
+      "exact_match_rate": 0.5,
+      "human_review_count": 0
+    },
+    "prompt-injection": {
+      "cases": 1,
+      "exact_match_rate": 1,
+      "human_review_count": 1
+    },
+    "unsupported-answer": {
+      "cases": 1,
+      "exact_match_rate": 0,
+      "human_review_count": 1
+    }
+  },
+  "by_risk": {
+    "high": {
+      "cases": 2,
+      "exact_match_rate": 0.5,
+      "human_review_count": 2
+    },
+    "normal": {
+      "cases": 4,
+      "exact_match_rate": 0.75,
+      "human_review_count": 1
+    }
+  },
+  "output": "reports/gpt-6-luna-results.jsonl",
+  "mode": "live"
+}

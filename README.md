@@ -1,21 +1,8 @@
 # Enterprise LLM Guardrail & Evaluation Engine
-1. Title: Enterprise LLM Guardrail & Evaluation Engine
-2. Core Technologies: Python, FastAPI, LangChain / LangGraph, OpenAI / Anthropic APIs, Pydantic, Redis (Rate Limiting), Mermaid.js.
-3. System Capabilities:
-   - Input validation & prompt injection defense.
-   - Output schema validation using Pydantic and safety moderation.
-   - Resilient execution with retries, timeouts, and deterministic fallback handling.
-   - An Eval Harness covering Exact Match, LLM-as-a-Judge, and Human-in-the-Loop spot-checking.
-
-> **Project status:** The API and evaluation CLI are implemented. Live generation requires a configured provider API key and Redis instance.
-> ## Run	Result	HTML report
-gpt-6-luna comparison	6/6 model answers and judge scores; 66.7% exact match	[Open report](LLM_Guardrail/reports/gpt-6-luna-evaluation.html)
-gpt-6.1-sol comparison	TODO: Blocked by exhausted API credits; need to retest; no model-quality score	[Open report](LLM_Guardrail/reports/gpt-6.1-sol-evaluation.html)
-Earlier gpt-6-luna run	6/6 model answers and judge scores; 83.3% exact match	[Open report](LLM_Guardrail/reports/live-evaluation.html)
 
 A Python service for deploying LLM applications with input and output safeguards, resilient model execution, and measurable quality. It pairs a FastAPI serving path with an evaluation harness so teams can manage safety, reliability, and regression risk as an application moves into production.
 
-
+> **Project status:** The API and evaluation CLI are implemented. Live generation requires a configured provider API key and Redis instance.
 
 ## Project Aim
 
@@ -29,87 +16,43 @@ A Python service for deploying LLM applications with input and output safeguards
 
 ### System architecture
 
-[User HTTP request]
-        │
-        ▼
-[FastAPI endpoint]
-        │
-        ▼
-[Input validation and prompt injection screening]
-        │
-        ▼
-[Redis rate limiting]
-        │
-        ▼
-/─────────────────\
-│ Request allowed? │
-\─────────────────/
-   │           │
-  No          Yes
-   │           │
-   ▼           ▼
-[Return    [LangChain or LangGraph orchestration]
-controlled     │
- error]        ▼
-           [LLM call with timeout and bounded retries]
-               │
-               ▼
-           /──────────────────────────\
-          │ Provider result available? │
-           \──────────────────────────/
-              │                    │
-             No                   Yes
-              │                    │
-              ▼                    │
-           [Authorized cache or    │
-           deterministic fallback] │
-              │                    │
-              └──────────┬─────────┘
-                         │
-                         ▼
-           [Output parsing and Pydantic schema validation]
-                         │
-                         ▼
-                   /──────────────\
-                  │ Schema valid?  │
-                   \──────────────/
-                      │        │
-                     No       Yes
-                      │        │
-                      │        ▼
-                      │    [Output filtering and safety moderation]
-                      │        │
-                      │        ▼
-                      │    /───────────────\
-                      │   │ Safe and valid? │
-                      │    \───────────────/
-                      │       │         │
-                      │      No        Yes
-                      │       │         │
-                      ▼       ▼         ▼
-             [Controlled safe response]  [User response]
+```mermaid
+flowchart TD
+    A[User HTTP request] --> B[FastAPI endpoint]
+    B --> C[Input validation and prompt injection screening]
+    C --> D[Redis rate limiting]
+    D --> E{Request allowed?}
+    E -- No --> F[Return controlled error]
+    E -- Yes --> G[LangChain or LangGraph orchestration]
+    G --> H[LLM call with timeout and bounded retries]
+    H --> I{Provider result available?}
+    I -- No --> J[Authorized cache or deterministic fallback]
+    I -- Yes --> K[Output parsing and Pydantic schema validation]
+    J --> K
+    K --> P{Schema valid?}
+    P -- No --> O[Controlled safe response]
+    P -- Yes --> L[Output filtering and safety moderation]
+    L --> M{Safe and valid?}
+    M -- Yes --> N[User response]
+    M -- No --> O[Controlled safe response]
+```
 
 Validation rejects malformed or disallowed requests before a provider call. Both primary and fallback outputs pass through the same schema and safety checks; a failed check returns a controlled response rather than unchecked model text.
 
 ### Evaluation harness pipeline
 
-[Test case ingestion] ──> [Model generation] ──┬──> [Deterministic exact match] ────┬──> [Aggregated metrics]
-                                            │                                     │              │
-                                            └──> [LLM-as-a-Judge rubric] ─────────┘              ▼
-                                                                                       /────────────────────────\
-                                                                                      │ Low score or sampled case?│
-                                                                                       \────────────────────────/
-                                                                                          │                  │
-                                                                                         Yes                 No
-                                                                                          │                  │
-                                                                                          ▼                  │
-                                                                                [Human-in-the-loop           │
-                                                                                 spot-check queue]           │
-                                                                                          │                  │
-                                                                                          └────────┬─────────┘
-                                                                                                   │
-                                                                                                   ▼
-                                                                                          [Evaluation report]
+```mermaid
+flowchart LR
+    A[Test case ingestion] --> B[Model generation]
+    B --> C[Deterministic exact match]
+    B --> D[LLM-as-a-Judge rubric]
+    C --> E[Aggregated metrics]
+    D --> E
+    E --> F{Low score or sampled case?}
+    F -- Yes --> G[Human-in-the-loop spot-check queue]
+    F -- No --> H[Evaluation report]
+    G --> H
+```
 
 Evaluation cases should be versioned with their inputs, expected outputs, and rubric criteria. Store the model version, prompt version, run configuration, and judge rationale with each result so regressions can be investigated.
 
@@ -163,56 +106,62 @@ The commands below run the implemented FastAPI application and evaluation CLI.
 
 1. Create and activate a virtual environment:
 
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
 2. Install dependencies:
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-   To run the automated tests, install `requirements-dev.txt` instead; it includes the application dependencies.
+   To run the automated tests, install `requirements-dev.txt` instead; it includes the application dependencies.
 
-3. Start Redis locally or set `REDIS_URL` to an existing instance. Configure the environment and keep keys out of source control:
+3. Start Redis locally or set `REDIS_URL` to an existing instance. Configure the environment and keep keys out of source control. You can copy `.env.example` to `.env`, fill in the values, and let the application load it automatically:
 
-   ```bash
-   export LLM_PROVIDER=openai
-   export LLM_MODEL="your-provider-model-id"
-   export OPENAI_API_KEY="your-api-key"
-   export APP_API_KEYS="replace-with-a-long-random-client-key"
-   export REDIS_URL="redis://localhost:6379/0"
-   export LLM_TIMEOUT_SECONDS=15
-   export LLM_MAX_RETRIES=2
-   export MODERATION_MODE=openai
-   ```
+   ```bash
+   cp .env.example .env
+   ```
 
-   For Anthropic, set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`. Keep `OPENAI_API_KEY` if using `MODERATION_MODE=openai`; otherwise set `MODERATION_MODE=local`.
+   Use the provider's **API model ID** in `.env`; for GPT-6 Astra, the ID is [`gpt-6-astra`](https://developers.openai.com/api/docs/models/gpt-6-astra). Set `OPENAI_API_KEY` to your OpenAI Platform API key. For the API endpoint, set `APP_API_KEYS` to a separate client secret of your choice. Alternatively, export values in the same terminal before running the application:
+
+   ```bash
+   export LLM_PROVIDER=openai
+   export LLM_MODEL="gpt-6-astra"
+   export OPENAI_API_KEY="your-api-key"
+   export APP_API_KEYS="replace-with-a-long-random-client-key"
+   export REDIS_URL="redis://localhost:6379/0"
+   export LLM_TIMEOUT_SECONDS=15
+   export LLM_MAX_RETRIES=2
+   export MODERATION_MODE=openai
+   ```
+
+   A plain `LLM_MODEL=value` shell assignment is not inherited by a later `python` command; use `export` or `.env`. For Anthropic, set `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY`. Keep `OPENAI_API_KEY` if using `MODERATION_MODE=openai`; otherwise set `MODERATION_MODE=local`.
 
 4. Start the API:
 
-   ```bash
-   uvicorn app.main:app --host 127.0.0.1 --port 8000
-   ```
+   ```bash
+   uvicorn app.main:app --host 127.0.0.1 --port 8000
+   ```
 
 5. Call the guarded endpoint:
 
-   ```bash
-   curl -X POST http://127.0.0.1:8000/v1/generate \
-     -H "Content-Type: application/json" \
-     -H "X-API-Key: replace-with-a-long-random-client-key" \
-     -d '{"prompt":"What is the capital of France?","context":"The capital of France is Paris."}'
-   ```
+   ```bash
+   curl -X POST http://127.0.0.1:8000/v1/generate \
+     -H "Content-Type: application/json" \
+     -H "X-API-Key: replace-with-a-long-random-client-key" \
+     -d '{"prompt":"What is the capital of France?","context":"The capital of France is Paris."}'
+   ```
 
 6. Run the evaluation harness against the included example case:
 
-   ```bash
-   python -m evals.run --cases evals/cases.jsonl --output evals/results.jsonl
-   ```
+   ```bash
+   python -m evals.run --cases evals/cases.jsonl --output evals/results.jsonl
+   ```
 
-   The CLI prints aggregate metrics and writes per-case JSONL results. It uses the selected provider, guarded generation, and a separate judge call without serving rate limits or cached answers. Runs are capped at **100 cases** by default; use `--max-cases` to set an explicit limit.
+   The CLI prints aggregate metrics and writes per-case JSONL results. It uses the selected provider, guarded generation, and a separate judge call without serving rate limits or cached answers. Runs are capped at **100 cases** by default; use `--max-cases` to set an explicit limit.
 
 ### Test locally and save a report
 
@@ -235,25 +184,47 @@ To run a **live evaluation**, configure a model and its provider key in the same
 
 ```bash
 export LLM_PROVIDER=openai
-export LLM_MODEL="your-available-model-id"
+export LLM_MODEL="gpt-6-astra"
 export OPENAI_API_KEY="your-api-key"
 export MODERATION_MODE=openai
 ```
 
 For Anthropic, use `LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and an Anthropic `LLM_MODEL`. Set `MODERATION_MODE=local`, or keep an `OPENAI_API_KEY` for hosted moderation. The evaluation CLI does not require `APP_API_KEYS` or Redis.
 
+Verify that the evaluator sees your settings without displaying the secret:
+
+```bash
+python -c 'from app.config import Settings; s = Settings.from_env(require_app_api_keys=False); print("provider:", s.provider, "model:", s.model, "API key loaded:", bool(s.api_key))'
+```
+
 Then save a readable evaluation report plus machine-readable results:
 
 ```bash
 mkdir -p reports
-python -m evals.run \
-  --cases evals/cases.jsonl \
-  --output reports/results.jsonl \
-  --report reports/evaluation.md \
-  --summary reports/summary.json
+python -m evals.run --cases evals/cases.jsonl --output reports/results.jsonl --report reports/evaluation.md --html-report reports/evaluation.html --summary reports/summary.json
 ```
 
-Open `reports/evaluation.md` for aggregate and per-case results. `reports/summary.json` contains the same aggregate metrics for automation; `reports/results.jsonl` retains detailed case records and may contain sensitive model output. The included case file has one example; add more JSONL cases for a useful regression report.
+Open `reports/evaluation.html` in a browser for a visual report with aggregate metrics and case details, or `reports/evaluation.md` for a compact text report. The HTML report includes prompts, reference context, expected answers, and generated or replayed answers; handle it as potentially sensitive local data. `reports/summary.json` contains aggregate metrics for automation; `reports/results.jsonl` retains detailed case records and may also contain sensitive model output. Check **`degraded_count`** in the summary and each case's **`source`**: `fallback` means the model answer was unavailable, so that case did not receive an LLM judge score. The starter `evals/cases.jsonl` has one case; the next section provides a larger example set.
+
+### Generate a report from concrete examples
+
+The repository includes six example cases in `evals/sample_cases.jsonl` and saved responses in `evals/sample_replay.jsonl`. They cover a grounded fact, return and shipping policies, email extraction, an instruction hidden in reference context, and an unsupported warranty claim. The saved responses deliberately get two cases wrong so the report has visible failures.
+
+For example, the return-policy case asks **“What is the return window?”** with reference text **“Customers may return unopened products within 30 days of delivery.”** Its expected answer is `30 days`; the saved answer is `14 days`, so exact match fails. The warranty case has no supported duration, expects `I do not know`, and deliberately replays `Two years`. You can edit either JSONL file to try your own prompts and answers; keep one replay answer with the same `id` for each case.
+
+Run this **offline replay** to generate a report without an API key or Redis:
+
+```bash
+python -m evals.run --cases evals/sample_cases.jsonl --replay evals/sample_replay.jsonl --output reports/sample-results.jsonl --report reports/sample-evaluation.md --html-report reports/sample-evaluation.html --summary reports/sample-summary.json
+```
+
+Open `reports/sample-evaluation.html` in a browser (`open reports/sample-evaluation.html` on macOS) to inspect each input and answer, `reports/sample-evaluation.md` for the text report, or `reports/sample-results.jsonl` for raw results. The supplied examples produce **4 exact matches out of 6 (66.7%)**; human review flags cover mismatches, high-risk cases, and the configured spot sample. Replay does **not** call a model or LLM judge, so judge metrics are blank and replay results must not be presented as live model performance. To evaluate these same cases against your configured provider, omit `--replay` and use separate output names:
+
+```bash
+python -m evals.run --cases evals/sample_cases.jsonl --output reports/live-results.jsonl --report reports/live-evaluation.md --html-report reports/live-evaluation.html --summary reports/live-summary.json
+```
+
+If a run logs `Generation degraded`, the safe diagnostic includes either an HTTP status and recognized code/parameter, or a fixed `reason` such as `timeout`, `transport_error`, or `malformed_response`. For OpenAI, `401` points to authentication, while `429` can mean rate or quota limits; inspect the code before retrying. The [OpenAI API error guide](https://developers.openai.com/api/docs/guides/error-codes) lists the specific causes. For `reason=timeout`, review `LLM_TIMEOUT_SECONDS` and `REQUEST_DEADLINE_SECONDS`. The LibreSSL warning from some macOS Python installations is separate from the provider failure.
 
 ### Configuration reference
 
@@ -275,8 +246,4 @@ Open `reports/evaluation.md` for aggregate and per-case results. `reports/summar
 
 `POST /v1/generate` accepts `{"prompt": "...", "context": "..."}` and requires `X-API-Key`. It returns `answer`, `source`, and `request_id`. Request validation errors return `422`; blocked injection patterns return `400`; invalid keys return `401`; rate limits return `429`; Redis failure returns `503`. `GET /health/live` and `GET /health/ready` provide liveness and Redis readiness checks.
 
-Each evaluation JSONL line contains `id`, `prompt`, `expected`, and optional `context`, `required_points`, `category`, and `risk` (`high` flags human review). Run tests with `pip install -r requirements-dev.txt` followed by `pytest -v -ra` to see every test name and result.
-
-
-
-
+Each evaluation case JSONL line contains `id`, `prompt`, `expected`, and optional `context`, `required_points`, `category`, and `risk` (`high` flags human review). Each replay JSONL line contains the matching `id` and an `answer`; an optional `judge` object may provide `faithfulness`, `completeness`, and `rationale` from a separate assessment. Replay IDs must match case IDs exactly. Run tests with `pip install -r requirements-dev.txt` followed by `pytest -v -ra` to see every test name and result.

@@ -1,0 +1,49 @@
+{
+  "cases": 6,
+  "exact_match_rate": 0,
+  "degraded_count": 6,
+  "faithfulness_mean": null,
+  "completeness_mean": null,
+  "human_review_count": 6,
+  "by_category": {
+    "extraction": {
+      "cases": 1,
+      "exact_match_rate": 0,
+      "human_review_count": 1
+    },
+    "grounded-fact": {
+      "cases": 1,
+      "exact_match_rate": 0,
+      "human_review_count": 1
+    },
+    "policy": {
+      "cases": 2,
+      "exact_match_rate": 0,
+      "human_review_count": 2
+    },
+    "prompt-injection": {
+      "cases": 1,
+      "exact_match_rate": 0,
+      "human_review_count": 1
+    },
+    "unsupported-answer": {
+      "cases": 1,
+      "exact_match_rate": 0,
+      "human_review_count": 1
+    }
+  },
+  "by_risk": {
+    "high": {
+      "cases": 2,
+      "exact_match_rate": 0,
+      "human_review_count": 2
+    },
+    "normal": {
+      "cases": 4,
+      "exact_match_rate": 0,
+      "human_review_count": 4
+    }
+  },
+  "output": "reports/gpt-6.1-sol-results.jsonl",
+  "mode": "live"
+}
