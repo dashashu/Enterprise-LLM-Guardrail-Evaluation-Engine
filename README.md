@@ -19,7 +19,7 @@ A Python service for deploying LLM applications with input and output safeguards
 | `gpt-6-luna` comparison | 6/6 model answers and judge scores; 66.7% exact match | [Open report](reports/gpt-6-luna-evaluation.html) |
 | `gpt-6.1-sol` comparison | Blocked by exhausted API credits; needs retesting; no model-quality score | [Open report](reports/gpt-6.1-sol-evaluation.html) |
 | Earlier `gpt-6-luna` run | 6/6 model answers and judge scores; 83.3% exact match | [Open report](reports/live-evaluation.html) |
-<img width="1134" height="313" alt="image" src="https://github.com/user-attachments/assets/3c533007-4d33-4362-9170-469e203fa4c2" />
+
 Note: Evaluation cases should be versioned with their inputs, expected outputs, and rubric criteria. Store the model version, prompt version, run configuration, and judge rationale with each result so regressions can be investigated.
 
 ## Architecture & System Flow
