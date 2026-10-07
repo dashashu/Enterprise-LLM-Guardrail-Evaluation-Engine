@@ -7,10 +7,15 @@
    - Resilient execution with retries, timeouts, and deterministic fallback handling.
    - An Eval Harness covering Exact Match, LLM-as-a-Judge, and Human-in-the-Loop spot-checking.
 
+> **Project status:** The API and evaluation CLI are implemented. Live generation requires a configured provider API key and Redis instance.
+> ## Run	Result	HTML report
+gpt-6-luna comparison	6/6 model answers and judge scores; 66.7% exact match	[Open report](LLM_Guardrail/reports/gpt-6-luna-evaluation.html)
+gpt-6.1-sol comparison	TODO: Blocked by exhausted API credits; need to retest; no model-quality score	[Open report](LLM_Guardrail/reports/gpt-6.1-sol-evaluation.html)
+Earlier gpt-6-luna run	6/6 model answers and judge scores; 83.3% exact match	[Open report](LLM_Guardrail/reports/live-evaluation.html)
 
 A Python service for deploying LLM applications with input and output safeguards, resilient model execution, and measurable quality. It pairs a FastAPI serving path with an evaluation harness so teams can manage safety, reliability, and regression risk as an application moves into production.
 
-> **Project status:** The API and evaluation CLI are implemented. Live generation requires a configured provider API key and Redis instance.
+
 
 ## Project Aim
 
